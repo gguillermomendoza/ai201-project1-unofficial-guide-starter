@@ -48,11 +48,63 @@ Reviews of parks in the city of Los Angeles - useful because there are so many p
 
 **Chunk size:**
 
+Three strategies depending on source type:
+- **Reddit** — one chunk per comment; thread title prepended as `"Thread topic: <title>. Comment: ..."` so anonymous comments carry topic context; skip < 20 words, split > 500 words with 50-word overlap
+- **TripAdvisor / Yelp** — one chunk per review; park name extracted from `#` section headers and prepended as `"Park: <name>. ..."` so every review is self-identifying even when the reviewer never names the park; same skip/split rules as Reddit
+- **Article sources** — sentence-boundary chunks of ~300 words with ~75-word sentence overlap (avoids mid-sentence cuts that lose the park name at the start of a sentence)
+
 **Overlap:**
+
+- Articles: ~75 words, at sentence boundaries (not raw word count)
+- Standalone reviews: 50-word overlap only when a single comment/review exceeds 500 words; no overlap otherwise
 
 **Why these choices fit your documents:**
 
+Reviews and Reddit comments are self-contained thoughts — splitting them mid-comment would break context and make individual opinions unretreivable. Article sources are longer and park information is spread across paragraphs, so sentence-boundary chunking at ~300 words keeps each chunk large enough to contain a full recommendation while staying small enough for specific queries like "picnic" or "scenic views" to return targeted results. The park name prefix on review chunks was added after discovering that Yelp/TripAdvisor reviews frequently never mention the park by name, making them impossible to retrieve by park name query without the prefix.
+
 **Final chunk count:**
+
+664 total chunks across 10 sources (up from 288 in an earlier version — the increase came from the TripAdvisor source, which produced 454 chunks once each review was split into its own chunk rather than grouped).
+
+---
+
+## Sample Chunks
+
+<!-- 5 representative chunks from chunks.json, one per source.
+     For each: does it make sense on its own? Could someone answer a question from it alone? -->
+
+**Chunk 1** — Source: `tripadvisor_la_parks`
+
+> Park: Griffith Park. The largest urban wilderness municipal park in the United States Griffith Park in Los Angeles is the largest urban wilderness municipal park in the United States. With over 4,300 acres of natural Chaparral-covered terrain and landscaped parkland and picnic areas, it is filled with hiking trails, trees trains and attractions, from the Hollywood Sign to the Griffith Park Observatory to the Los Angeles Zoo and Botanical Gardens to the Autry Museum of the American West to the Greek Theatre to Travel Town. There is something for everyone. To see it all, or at least most of it, hop on the Griffith Parkline, which offers convenient transportation for the park's 10 million annual visitors. The bus runs from noon to 10 p.m. on Saturdays and Sundays and delivers passengers to more than a dozen locations. Among the most interesting are the 133-acre zoo, which was founded in 1966 and is home to more than 2,100 animals representing over 270 species; the Griffith Observatory, which dates to 1935 and offers some of the best views of Los Angeles, from the Pacific Ocean to Downtown; the 45-foot-tall, 350-foot-long Hollywood Sign; the 5,900-seat Greek Theatre, one of Los Angeles' premier outdoor venues; the Autry Museum of the American West, which realized legendary recording and movie star Gene Autry's dream to build a museum to exhibit and interpret the heritage of the West and showcase its influence on the United States and the world; and Travel Town Museum, which focuses on the history of railroad transportation in the western United States from 1880 to the 1930s. Open daily from 5 a.m. to 10:30 p.m., Griffith Park is located on the eastern end of the Santa Monica Mountain range and Hollywood Hills, just west of the Golden State Freeway or I-5, between Los Feliz Boulevard on the south and the Ventura Freeway on the north. Hiking is one of the most popular forms of recreation in the park with a 53-mile network of trails, fire roads and bridle paths. One trail leads from the observatory parking lot to the top of 1,625-foot Mount Hollywood, the park's highest point.
+
+
+---
+
+**Chunk 2** — Source: `yelp_la_parks`
+
+> Park: Vista Hermosa Park. This is a small park located just a bit northwest of downtown LA. There's a small parking lot which is freeee; otherwise, you will need to find street parking, and good luck with that. The area around the park is legitimately sketchy but I didn't see any bad characters inside the park whatsoever. The park could be maintained better. The weeds are high in some areas and the grass needs watering in other locations. Having said all that, it's a nice enough little park with at least one spot for an amazing view of downtown. I have never seen the movie, "(500) Days of Summer," but some people believe the striking view of downtown with the park bench in the foreground was shown in the movie. I can't vouch for that but that particular spot is gorgeous and perfect for a photo op. You'll know the spot when you see it. Worth checking out. Gorgeous view of DTLA.
+
+
+---
+
+**Chunk 3** — Source: `hotels_com_la_parks`
+
+> 1. Grand Park — A 12-acre space in central Los Angeles. Grand Park covers 12 acres of greenery in Los Angeles' civic centre. You can find tree-shaded walking paths, botanic gardens, casual sitting areas, and historic fountains. It was founded in 1966 as a place where residents can unwind throughout the day. Grand Park offers excellent views of Los Angeles, stretching from the Music Center to City Hall. It has 4 distinct sections that work together to provide a wide range of recreational activities. Some of its highlights include a community terrace with a diverse array of drought-tolerant plants and a small lawn hosting cultural events and weekly farmers' markets. A must-see is Arthur J. Will Memorial Fountain, which has a membrane pool that's open for wading. 2. Palisades Park — Santa Monica's ocean-facing park. Palisades Park offers expansive views of the Pacific Ocean and coastal mountains of Santa Monica. You can find all sorts of fun in this family-friendly park, including walking paths, a collection of art installations and diverse tree species. The best time to visit is in the evenings – from the cliffs, you can take in the breathtaking sunset, ocean, and mountains.
+
+
+---
+
+**Chunk 4** — Source: `discover_la_parks_guide`
+
+> Today, it is home to the Frank Lloyd Wright-designed Hollyhock House, LA's first UNESCO World Heritage Site; Los Angeles Municipal Art Gallery, Barnsdall Art Center, Junior Arts Center and the Barnsdall Gallery Theatre. Open from sunrise to sunset, Lake Hollywood Park is an idyllic escape from the hustle and bustle of the city with a fantastic view of the Hollywood Sign. The park features a children's play area, picnic tables, barbecue pits, and a grass field for on-leash dogs to enjoy. Formally known as Hancock Park La Brea, this city park in the Miracle Mile district is home to two of L.A.'s most popular cultural attractions, the Los Angeles County Museum of Art (LACMA) and the La Brea Tar Pits & Museum. Located on Wilshire Boulevard just east of Fairfax Avenue, the park has open spaces and landscaped areas for walking, picnicking, and other recreation. Hancock Park La Brea is registered as California Historical Landmark #170, and the iconic La Brea Tar Pits are a designated U.S. National Natural Landmark. Centrally located across the street from The Grove, Pan Pacific Park was once home to the famous Pan-Pacific Auditorium. Today it's one of the most popular and family-friendly parks in the city, with features that include barbecue pits, a baseball diamond (lighted), basketball courts (lighted/indoor/outdoor), a children's play area, an indoor gym (no weights) and picnic tables. Pan Pacific Park is also the site of the Los Angeles Museum of the Holocaust, the oldest Holocaust museum in the United States.
+
+
+---
+
+**Chunk 5** — Source: `reddit_picnic_parks`
+
+> Thread topic: Best parks for picnics?. Comment: Elysian is probably the easiest. You park, walk like 10 steps then you're there. It's also wide open. Personally I like Barnsdall the best, great view and perfect for a picnic, but it's pretty tiny.
+
 
 ---
 
@@ -66,7 +118,11 @@ Reviews of parks in the city of Los Angeles - useful because there are so many p
 
 **Model used:**
 
+`all-MiniLM-L6-v2` via `sentence-transformers` (local, no API key required). Chosen because it runs entirely locally (no API cost or latency for embedding), produces 384-dimensional vectors that are fast to compute and store in ChromaDB, and performs well on short English text such as park reviews and Reddit comments.
+
 **Production tradeoff reflection:**
+
+For a real deployment, I would weigh several tradeoffs. A larger model like `text-embedding-3-large` (OpenAI) or `voyage-large-2` would likely score higher on retrieval benchmarks, especially for nuanced semantic queries, but adds API cost and latency per query. A multilingual model (e.g. `paraphrase-multilingual-MiniLM-L12-v2`) would help if expanding to Spanish-language reviews, which are common in LA. Context length matters too — `all-MiniLM-L6-v2` is capped at 256 tokens, which is tight for the longest article chunks; a model with a 512+ token window (e.g. `all-mpnet-base-v2`) would encode those without truncation. For this project's scale (664 chunks, English-only, no cost constraint), `all-MiniLM-L6-v2` is a reasonable choice.
 
 ---
 

@@ -123,42 +123,20 @@ The domain I chose is parks in the LAarea. This knowledge is valuable because LA
 
 **Chunk size:**
 
+Different chunk sizes per source type (updated after chunk quality review during implementation):
 
-
-
-
-Since my database consist of varying types of content, I'll try to have different chunk sizes for different types of documents. 
-
-
-- Reddit / Reviews: By comment (whenever possible) 
-
-
-- Articles: By park section / paragraph group
-
-
-I think a firm 250 -500 words per chunk could work.
-
-
-
-
+- **Reddit** — one chunk per comment; thread title (from `[POST]` segment) is prepended as `"Thread topic: <title>. Comment: ..."` so anonymous comments carry topic context; skip < 20 words, split > 500 words with 50-word overlap
+- **TripAdvisor / Yelp** — one chunk per review; park name is extracted from `#` section headers and prepended as `"Park: <name>. ..."` so every review is self-identifying even when the reviewer never names the park; same skip/split rules as Reddit
+- **Article sources** — sentence-boundary chunks of ~300 words with ~75-word sentence overlap
 
 **Overlap:**
 
-
-For articles, longer reviews, etc 50 words.
-
-
-Standalone reviews should have no overlap. 
-
+- Articles: ~75 words (sentence-boundary overlap, not word-count, to avoid mid-sentence cuts)
+- Standalone reviews (Reddit comments, Yelp, TripAdvisor): 50-word overlap only when a comment exceeds 500 words and must be split; no overlap on normal-length reviews
 
 **Reasoning:**
 
-
-
-
-
-This size should be large enough for a chunk to contain a complete recommendation or reason, but small enough that retrieval can match specific user queries like “picnic,” “scenic,” or “quiet park” without pulling in unrelated parks.
-
+This size is large enough for a chunk to contain a complete recommendation or reason, but small enough that retrieval can match specific queries like "picnic," "scenic," or "quiet park" without pulling in unrelated parks. The park name / thread topic prefix fixes were added after initial inspection found that review chunks from Yelp/TripAdvisor never named the park (making them un-retrievable by park name) and article chunks started mid-sentence (losing the park name that opened the sentence).
 
 ---
 
@@ -209,56 +187,21 @@ This should provide enough context for questions that may have multiple good ans
 
 
 ---
-
-
-
-
-
 ## Evaluation Plan
 
-
-
-
-
 <!-- List your 5 test questions with their expected correct answers.
-
-
      Questions should be specific enough that you can judge whether the system's response
-
-
      is right or wrong. "What are good dining halls?" is too vague.
-
-
      "What do students say about wait times at [dining hall name] during lunch?" is testable. -->
 
 
-
-
-
 | # | Question | Expected answer |
-
-
 |---|----------|-----------------|
-
-
 | 1 |Which LA parks are recommended for scenic views? |parks that appear in the scenic parks Reddit thread and/or travel guides, and explain why they are scenic based on retrieved source text |
-
-
 | 2 |Which parks are recommended for picnics? | Identifty parks mentioned in the picnic focused Reddit threador guide articles as good picnic options, cite sources|
-
-
 | 3 |Which parks seem good for relaxing or hanging out alone? |The answer should draw from the LA Times relaxing/chill parks source and any Reddit comments that discuss calm, quiet, or solo-friendly parks|
-
-
 | 4 |What are some differences between official park information and user review information? The answer should explain that official sources provide structured details like park names, addresses, or facilities, while Reddit/Yelp/Tripadvisor provide subjective opinions, use cases, and personal experiences|
-
-
 | 5 |Which park is best for someone who wants a beach park with views? | The answer should retrieve chunks mentioning beach-adjacent or coastal/scenic parks. If the sources do not clearly support one best answer, the system should present options rather than invent a single definitive answer|
-
-
-
-
-
 ---
 
 
