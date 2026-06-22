@@ -137,7 +137,18 @@ For a real deployment, I would weigh several tradeoffs. A larger model like `tex
 
 **System prompt grounding instruction:**
 
+
+> "STRICT GROUNDING RULE: Answer ONLY using the source documents provided in the user message. Do not use any outside knowledge, training data, or information not present in those documents. If the provided sources do not contain enough information to answer the question, respond with exactly: 'I don't have enough information on that.'"
+
+The fallback phrase is defined as the `INSUFFICIENT_ANSWER` constant in `query.py` so the exact string is used consistently in the prompt, in the demo's grounding check, and in the UI description — no risk of a typo causing a mismatch.
+
+Each retrieved chunk is labeled `[SOURCE 1]` through `[SOURCE 5]` in the user message, with the source name and chunk index shown above the text. This gives the model clear numbered references to cite rather than needing to invent specifics — the labels reduce hallucination by making evidence explicit.
+
+The context block is placed before the question in the user message (context first, then "Question: …"), which keeps the instruction structure clean and matches the pattern the model was trained on for reading comprehension tasks.
+
 **How source attribution is surfaced in the response:**
+
+Source attribution is enforced at the Python layer, not left to the LLM. In `query.py:rag()`, the retrieved chunks are stored in a list before the LLM call. After generation, that same list is returned alongside the answer as the `"sources"` field of the result dict. The Gradio UI (`app.py`) and the demo (`demo.py`) both read attribution from this programmatic list — not from the model's answer text. Even if the model forgets to cite a source in its prose, the source panel always shows all retrieved chunks with their URL, chunk index, and cosine distance score.
 
 ---
 
@@ -149,11 +160,11 @@ For a real deployment, I would weigh several tradeoffs. A larger model like `tex
 
 | # | Question | Expected answer | System response (summarized) | Retrieval quality | Response accuracy |
 |---|----------|-----------------|------------------------------|-------------------|-------------------|
-| 1 | | | | | |
-| 2 | | | | | |
-| 3 | | | | | |
-| 4 | | | | | |
-| 5 | | | | | |
+| 1 | Which LA parks are recommended for scenic views? | Parks known for their views (Griffith Observatory area, Runyon Canyon) | Named Griffith Park, Runyon Canyon, and Elysian Park; cited specific viewpoints (Observatory, Angel's Point, Mt. Hollywood); all citations backed by retrieved chunks | Relevant (distances 0.24–0.27) | Accurate |
+| 2 | Which parks are recommended for picnics? | Accessible, open parks suited for groups | Named 10 specific parks (Elysian, Barnsdall, Kenneth Hahn, Lake Balboa, Veterans Park in Sylmar, etc.) drawn directly from Reddit picnic thread and Yelp; one Yelp chunk (Pan Pacific) noted it was not great for picnics | Relevant (distances 0.16–0.25) | Accurate |
+| 3 | Which parks seem good for relaxing or hanging out alone? | Quieter parks with seating, low activity | Named MacArthur Park, Lake Balboa Park, and Everett Park (with daytime caveat); distances were the highest of the passing queries (~0.31–0.33), suggesting the corpus covers "relaxing" only incidentally | Partially relevant (distances 0.31–0.33) | Partially accurate — correct parks, but limited coverage; "hanging out alone" matched group/activity reviews rather than solitude-specific content |
+| 4 | What are some differences between official park information and user review information? | Contrast between factual/institutional data and subjective experience | Distinguished "data-driven statistics and rankings" vs. "personal experiences and anecdotal evidence"; mentioned broken playgrounds and poor maintenance from Reddit; partially synthesized rather than directly quoted | Off-target (distances 0.53–0.60) | Partially accurate — answer is reasonable but the corpus has no direct meta-comparison content; the model filled the gap with inference rather than retrieved evidence |
+| 5 | Which park is best for someone who wants a beach park with views? | A coastal park with ocean views | Recommended Point Fermin over White Point, citing "GREAT OCEAN VIEWS" and "Nice views of the cliffs ocean" from TripAdvisor reviews; explained reasoning across sources | Relevant (distances 0.31–0.35) | Accurate |
 
 **Retrieval quality:** Relevant / Partially relevant / Off-target  
 **Response accuracy:** Accurate / Partially accurate / Inaccurate
