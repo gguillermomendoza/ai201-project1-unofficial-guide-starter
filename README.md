@@ -190,15 +190,15 @@ Source attribution is enforced at the Python layer, not left to the LLM. In `que
 
 **What the system returned:**
 
-The model answered that official sources provide "data-driven statistics and rankings" while user reviews offer "personal experiences and anecdotal evidence," and cited broken playgrounds and poor maintenance as examples reviewers raised that official reports miss. Cosine distances on all 5 retrieved chunks were 0.53–0.60 — all above the 0.50 grounding-concern threshold. The demo flagged this as a potential grounding issue.
+The model answered that official sources provide "data-driven statistics and rankings" while user reviews offer "personal experiences and anecdotal evidence," and cited broken playgrounds and poor maintenance as examples reviewers raised that official reports miss. Cosine distances on all 5 retrieved chunks were 0.53–0.60 (>0.50 grounding-concern threshold. The demo flagged this as a potential grounding issue.
 
 **Root cause (tied to a specific pipeline stage):**
 
-The failure is at the retrieval stage. The question asks for a meta-comparison between two types of sources, but the corpus contains no documents that make this comparison — every document is either an official source or a user review, not a text that analyzes the difference between them. Because no chunk is semantically close to the question, retrieval returns loosely related Reddit comments about park quality complaints (distances ~0.53–0.60). The generation stage then produces a plausible-sounding answer by synthesizing across those chunks, but the reasoning is the model's own inference, not something stated in the retrieved text. Grounding is technically violated even though the answer sounds reasonable.
+The failure is at the retrieval stage. The question asks for a meta-comparison between two types of sources, but the corpus contains no documents that make this comparison. Every document is either an official source or a user review, not a text that analyzes the difference between them. Because no chunk is semantically close to the question, retrieval returns loosely related Reddit comments about park quality complaints (distances ~0.53–0.60). The generation stage then produces a plausible-sounding answer by synthesizing across those chunks, but the reasoning is the model's own inference, not something stated in the retrieved text. Grounding is technically violated even though the answer sounds reasonable.
 
 **What you would change to fix it:**
 
-Add a distance-based fallback in `query.py`: if all retrieved chunks exceed a threshold (e.g., 0.50), return `INSUFFICIENT_ANSWER` before calling the LLM at all, rather than passing weak context to the model. This would catch exactly this case — the demo already detects it after the fact, but the fix should happen before generation. Alternatively, add a source that explicitly compares official and community park information (e.g., a journalism piece or community advocacy report on LA park equity).
+Add a distance-based fallback in `query.py`: if all retrieved chunks exceed a threshold, return `INSUFFICIENT_ANSWER` before calling the LLM at all, rather than passing weak context to the model. This would catch exactly this case but the fix should happen before generation. Alternatively, I could add a source that explicitly compares official and community park information (e.g., a journalism piece or community advocacy report on LA park equity).
 
 ---
 
@@ -209,7 +209,11 @@ Add a distance-based fallback in `query.py`: if all retrieved chunks exceed a th
 
 **One way the spec helped you during implementation:**
 
+Having the evaluation questions written down before I touched any code gave me a concrete target to test against at every stage. As soon as retrieval was working, I could immediately run "Which parks are recommended for picnics?" and check whether the returned chunks were actually about picnic parks — rather than guessing whether the system was working. The spec also forced me to think about source variety before collection, which is why the corpus ended up with Reddit threads, Yelp reviews, TripAdvisor reviews, official city pages, and article sources rather than just one type of source that would have produced a retrieval blind spot.
+
 **One way your implementation diverged from the spec, and why:**
+
+The spec described a single chunking strategy — ~250–500 word chunks with 50-word overlap for articles and no overlap for standalone reviews. The implementation ended up with three distinct strategies after I inspected the actual document text. The key discovery was that Yelp and TripAdvisor reviews almost never mention the park by name inside the review body — the park name appears only in a section header above the review. Without the `"Park: <name>. ..."` prefix I added to every review chunk, a query like "Griffith Park reviews" would return zero relevant results because the word "Griffith" didn't appear in any chunk text. That fix wasn't in the spec because I hadn't looked at the raw documents yet when I wrote it.
 
 ---
 
@@ -226,12 +230,12 @@ Add a distance-based fallback in `query.py`: if all retrieved chunks exceed a th
 
 **Instance 1**
 
-- *What I gave the AI:*
-- *What it produced:*
-- *What I changed or overrode:*
+- *What I gave the AI:* I gave Claude the Chunking Strategy section and Documents table from planning.md and asked it to implement `chunk_text()`. I told it I had three source types (Reddit comments, Yelp/TripAdvisor reviews, and article sources) and described the skip/split rules from the spec.
+- *What it produced:* A `chunk_text()` function that applied a single sliding-window split across all source types, with a 50-word overlap and a minimum word threshold.
+- *What I changed or overrode:* I split it into three separate strategies after inspecting the actual document text and discovering that review chunks never named the park. I directed Claude to add a park-name prefix extracted from `#` section headers for Yelp and TripAdvisor chunks, and to prepend the thread title for Reddit comments. I also changed article overlap from 50 words to ~75 words at sentence boundaries to avoid mid-sentence cuts.
 
 **Instance 2**
 
-- *What I gave the AI:*
-- *What it produced:*
-- *What I changed or overrode:*
+- *What I gave the AI:* I gave Claude the Retrieval Approach section and the Architecture diagram from planning.md (embedding model: `all-MiniLM-L6-v2`, top-k=5, ChromaDB vector store) and asked it to implement `embed_and_store()` and `retrieve()`.
+- *What it produced:* Both functions working end-to-end — `embed_and_store()` encoded chunks and upserted them into a persistent ChromaDB collection, and `retrieve()` took a query string and returned the top-5 most similar chunks with metadata.
+- *What I changed or overrode:* The initial version used sequential integer IDs for ChromaDB documents, which caused duplicate entries every time `embed.py` was re-run on the same chunks. I directed Claude to switch to SHA-1 hashes of the chunk text as IDs so that re-runs would upsert cleanly rather than accumulate duplicates. I also added the `distance` field to the `retrieve()` return value so the demo could use it for the grounding check.
