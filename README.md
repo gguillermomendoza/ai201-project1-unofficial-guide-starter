@@ -163,7 +163,7 @@ Source attribution is enforced at the Python layer, not left to the LLM. In `que
 | 1 | Which LA parks are recommended for scenic views? | Parks known for their views (Griffith Observatory area, Runyon Canyon) | Named Griffith Park, Runyon Canyon, and Elysian Park; cited specific viewpoints (Observatory, Angel's Point, Mt. Hollywood); all citations backed by retrieved chunks | Relevant (distances 0.24–0.27) | Accurate |
 | 2 | Which parks are recommended for picnics? | Accessible, open parks suited for groups | Named 10 specific parks (Elysian, Barnsdall, Kenneth Hahn, Lake Balboa, Veterans Park in Sylmar, etc.) drawn directly from Reddit picnic thread and Yelp; one Yelp chunk (Pan Pacific) noted it was not great for picnics | Relevant (distances 0.16–0.25) | Accurate |
 | 3 | Which parks seem good for relaxing or hanging out alone? | Quieter parks with seating, low activity | Named MacArthur Park, Lake Balboa Park, and Everett Park (with daytime caveat); distances were the highest of the passing queries (~0.31–0.33), suggesting the corpus covers "relaxing" only incidentally | Partially relevant (distances 0.31–0.33) | Partially accurate — correct parks, but limited coverage; "hanging out alone" matched group/activity reviews rather than solitude-specific content |
-| 4 | What are some differences between official park information and user review information? | Contrast between factual/institutional data and subjective experience | Distinguished "data-driven statistics and rankings" vs. "personal experiences and anecdotal evidence"; mentioned broken playgrounds and poor maintenance from Reddit; partially synthesized rather than directly quoted | Off-target (distances 0.53–0.60) | Partially accurate — answer is reasonable but the corpus has no direct meta-comparison content; the model filled the gap with inference rather than retrieved evidence |
+| 4 | Which parks should I avoid at night? | Parks with reviewer-reported safety concerns or conditions that worsen after dark | Named Everett Park (Yelp review: "gets a bit ghetto at night time") and flagged Ladera Park for noise/trash; one chunk (Griffith Park) described night views positively, slightly diluting relevance | Partially relevant (distances 0.29–0.39) | Partially accurate — only one chunk directly addressed night safety; other retrieved chunks were tangentially related |
 | 5 | Which park is best for someone who wants a beach park with views? | A coastal park with ocean views | Recommended Point Fermin over White Point, citing "GREAT OCEAN VIEWS" and "Nice views of the cliffs ocean" from TripAdvisor reviews; explained reasoning across sources | Relevant (distances 0.31–0.35) | Accurate |
 
 **Retrieval quality:** Relevant / Partially relevant / Off-target  
@@ -186,11 +186,19 @@ Source attribution is enforced at the Python layer, not left to the LLM. In `que
 
 **Question that failed:**
 
+"What are some differences between official park information and user review information?"
+
 **What the system returned:**
+
+The model answered that official sources provide "data-driven statistics and rankings" while user reviews offer "personal experiences and anecdotal evidence," and cited broken playgrounds and poor maintenance as examples reviewers raised that official reports miss. Cosine distances on all 5 retrieved chunks were 0.53–0.60 — all above the 0.50 grounding-concern threshold. The demo flagged this as a potential grounding issue.
 
 **Root cause (tied to a specific pipeline stage):**
 
+The failure is at the retrieval stage. The question asks for a meta-comparison between two types of sources, but the corpus contains no documents that make this comparison — every document is either an official source or a user review, not a text that analyzes the difference between them. Because no chunk is semantically close to the question, retrieval returns loosely related Reddit comments about park quality complaints (distances ~0.53–0.60). The generation stage then produces a plausible-sounding answer by synthesizing across those chunks, but the reasoning is the model's own inference, not something stated in the retrieved text. Grounding is technically violated even though the answer sounds reasonable.
+
 **What you would change to fix it:**
+
+Add a distance-based fallback in `query.py`: if all retrieved chunks exceed a threshold (e.g., 0.50), return `INSUFFICIENT_ANSWER` before calling the LLM at all, rather than passing weak context to the model. This would catch exactly this case — the demo already detects it after the fact, but the fix should happen before generation. Alternatively, add a source that explicitly compares official and community park information (e.g., a journalism piece or community advocacy report on LA park equity).
 
 ---
 

@@ -59,38 +59,16 @@ The domain I chose is parks in the LAarea. This knowledge is valuable because LA
 
 
 | #  | Source                                                                    | Type                                        | URL or file path                                                                                                                                                                             |
-
-
 | -- | ------------------------------------------------------------------------- | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-
-
 | 1  | Reddit thread: “LA parks are now ranked 93rd out of 100 of the...”        | Reddit discussion / community reviews       | https://www.reddit.com/r/LosAngeles/comments/1tq8bqp/la_parks_are_now_ranked_93rd_out_of_100_of_the/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button |
-
-
 | 2  | Reddit thread: “Best scenic parks in LA?”                                 | Reddit discussion / recommendations         | https://www.reddit.com/r/AskLosAngeles/comments/1k6krhx/best_scenic_parks_in_la/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button                     |
-
-
 | 3  | Reddit thread: “Best parks for picnics?”                                  | Reddit discussion / recommendations         | https://www.reddit.com/r/AskLosAngeles/comments/1omxq33/best_parks_for_picnics/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button                      |
-
-
 | 4  | Discover Los Angeles: “The Guide to Los Angeles Parks”                    | Travel / tourism guide                      | https://www.discoverlosangeles.com/things-to-do/the-guide-to-los-angeles-parks                                                                                                               |
-
-
 | 5  | City of Los Angeles Department of Recreation and Parks: Park addresses    | Official government park directory          | https://recreation.parks.lacity.gov/parks                                                                                                                                                    |
-
-
 | 6  | Los Angeles Times: “Chill Los Angeles parks for hanging out and relaxing” | Newspaper / lifestyle article               | https://www.latimes.com/lifestyle/list/chill-los-angeles-parks-for-hanging-out-and-relaxing                                                                                                  |
-
-
 | 7  | Tripadvisor: Best parks in Los Angeles                                    | Review platform / travel rankings           | https://www.tripadvisor.com/Attractions-g32655-Activities-c57-t70-Los_Angeles_California.html                                                                                                |
-
-
 | 8  | Yelp: Parks in Los Angeles, CA                                            | Review platform / local business listings   | https://www.yelp.com/search?find_desc=Parks&find_loc=Los+Angeles%2C+CA                                                                                                                       |
-
-
 | 9  | Modern Luxury: “Best Parks in Los Angeles”                                | Lifestyle article / curated recommendations | https://www.modernluxury.com/best-parks-los-angeles/                                                                                                                                         |
-
-
 | 10 | Hotels.com: “Best Parks in Los Angeles”                                   | Travel guide / curated recommendations      | http://de.hotels.com/go/usa/best-parks-los-angeles                                                                                                                                           |
 
 
@@ -200,7 +178,7 @@ This should provide enough context for questions that may have multiple good ans
 | 1 |Which LA parks are recommended for scenic views? |parks that appear in the scenic parks Reddit thread and/or travel guides, and explain why they are scenic based on retrieved source text |
 | 2 |Which parks are recommended for picnics? | Identifty parks mentioned in the picnic focused Reddit threador guide articles as good picnic options, cite sources|
 | 3 |Which parks seem good for relaxing or hanging out alone? |The answer should draw from the LA Times relaxing/chill parks source and any Reddit comments that discuss calm, quiet, or solo-friendly parks|
-| 4 |What are some differences between official park information and user review information? The answer should explain that official sources provide structured details like park names, addresses, or facilities, while Reddit/Yelp/Tripadvisor provide subjective opinions, use cases, and personal experiences|
+| 4 | Which parks should I avoid at night? | The answer should draw from Yelp and Reddit reviews that mention safety concerns, sketchy behavior, or conditions that worsen after dark; if the corpus lacks sufficient night-safety content the system should say so rather than speculate |
 | 5 |Which park is best for someone who wants a beach park with views? | The answer should retrieve chunks mentioning beach-adjacent or coastal/scenic parks. If the sources do not clearly support one best answer, the system should present options rather than invent a single definitive answer|
 ---
 
