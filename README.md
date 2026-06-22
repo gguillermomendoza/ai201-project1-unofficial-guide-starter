@@ -239,3 +239,39 @@ The spec described a single chunking strategy — ~250–500 word chunks with 50
 - *What I gave the AI:* I gave Claude the Retrieval Approach section and the Architecture diagram from planning.md (embedding model: `all-MiniLM-L6-v2`, top-k=5, ChromaDB vector store) and asked it to implement `embed_and_store()` and `retrieve()`.
 - *What it produced:* Both functions working end-to-end — `embed_and_store()` encoded chunks and upserted them into a persistent ChromaDB collection, and `retrieve()` took a query string and returned the top-5 most similar chunks with metadata.
 - *What I changed or overrode:* The initial version used sequential integer IDs for ChromaDB documents, which caused duplicate entries every time `embed.py` was re-run on the same chunks. I directed Claude to switch to SHA-1 hashes of the chunk text as IDs so that re-runs would upsert cleanly rather than accumulate duplicates. I also added the `distance` field to the `retrieve()` return value so the demo could use it for the grounding check.
+
+---
+
+## How to Run
+
+**Requirements:** Python 3.9+, a free Groq API key from [console.groq.com](https://console.groq.com) (no credit card required).
+
+**1. Install dependencies**
+```bash
+pip install -r requirements.txt
+```
+If you hit a `huggingface-hub` version conflict, run:
+```bash
+pip install --upgrade transformers huggingface-hub sentence-transformers
+```
+
+**2. Add your API key**
+
+Create a `.env` file in the project root:
+```
+GROQ_API_KEY=your_key_here
+```
+
+**3. Build the vector store**
+```bash
+python embed.py
+```
+This encodes `chunks.json` and writes the ChromaDB index to `chroma_db/`. Takes ~15 seconds on CPU. Only needs to be run once (or after re-ingesting documents).
+
+**4. Run**
+
+| What | Command |
+|---|---|
+| Gradio web UI | `python app.py` → open `http://127.0.0.1:7860` |
+| 5 evaluation queries (with grounding check) | `python demo.py` |
+| Single custom query | `python query.py --query "Best parks for hiking?"` |
